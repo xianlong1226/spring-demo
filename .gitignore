@@ -1,0 +1,53 @@
+# ===== Build Tool =====
+
+# Gradle (current)
+.gradle/
+build/
+!gradle/wrapper/gradle-wrapper.jar
+
+# Maven (legacy — project migrated to Gradle)
+target/
+
+# Eclipse-style output
+bin/
+
+# ===== Java =====
+*.class
+*.jar
+*.war
+*.ear
+*.nar
+hs_err_pid*
+replay_pid*
+
+# ===== IDE =====
+
+# IntelliJ IDEA
+.idea/
+*.iml
+out/
+
+# VSCode
+.vscode/
+*.code-workspace
+
+# Vim
+*.swp
+*.swo
+*~
+
+# ===== OS =====
+.DS_Store
+Thumbs.db
+
+# ===== Logs =====
+*.log
+logs/
+
+# ===== Environment & Secrets =====
+.env
+.env.*
+
+# ===== Spring Boot =====
+# DevTools restart trigger (auto-generated)
+.spring-devtools.properties

@@ -1,0 +1,78 @@
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '3.3.1'
+    id 'io.spring.dependency-management' version '1.1.5'
+}
+
+group = 'com.example'
+version = '0.0.1-SNAPSHOT'
+description = '前端转全栈 Spring Boot 练手项目'
+
+java {
+    sourceCompatibility = '17'
+}
+
+configurations {
+    compileOnly {
+        extendsFrom annotationProcessor
+    }
+}
+
+repositories {
+    // 国内优先用阿里云镜像，加快依赖下载
+    maven { url 'https://maven.aliyun.com/repository/public' }
+    maven { url 'https://maven.aliyun.com/repository/spring' }
+    mavenCentral()
+}
+
+dependencies {
+    // Web
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+
+    // JPA (ORM) — User 模块使用
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+
+    // MyBatis — Article 模块使用
+    implementation 'org.mybatis.spring.boot:mybatis-spring-boot-starter:3.0.3'
+
+    // PageHelper (MyBatis 分页插件)
+    implementation 'com.github.pagehelper:pagehelper-spring-boot-starter:2.1.0'
+
+    // PostgreSQL
+    runtimeOnly 'org.postgresql:postgresql'
+
+    // Redis
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+
+    // Security + JWT
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+    implementation 'io.jsonwebtoken:jjwt-api:0.12.6'
+    runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.6'
+    runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.6'
+
+    // AOP
+    implementation 'org.springframework.boot:spring-boot-starter-aop'
+
+    // Validation
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+
+    // Lombok: 消灭样板代码
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
+
+    // DevTools: 热加载
+    developmentOnly 'org.springframework.boot:spring-boot-devtools'
+
+    // Test
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}
+
+// 让 bootRun 支持 DevTools 热重启：源码变更 → 自动重编译 → DevTools 检测到 classpath 变化 → 重启
+tasks.named('bootRun') {
+    // 持续构建模式：源码保存后 Gradle 自动重编译，触发 DevTools 热重启
+    continuous = true
+}
