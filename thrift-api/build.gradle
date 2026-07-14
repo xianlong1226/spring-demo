@@ -1,0 +1,14 @@
+description = 'Thrift RPC 服务端模块 — 提供 UserService RPC 服务'
+
+dependencies {
+    // Web（用于健康检查等辅助接口）
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+
+    // Thrift
+    implementation 'org.apache.thrift:libthrift:0.24.0'
+
+    // javax.annotation.Generated — Thrift 生成的代码依赖
+    implementation 'org.apache.tomcat:tomcat-annotations-api:10.1.25'
+}
+
+// thrift-api 不需要 bootRun continuous 模式

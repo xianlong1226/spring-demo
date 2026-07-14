@@ -1,59 +1,48 @@
 # Spring Boot Demo
 
-> 前端转全栈练习项目 — 从零跑通一个完整的用户 CRUD + JWT 鉴权
+> 前端转全栈练习项目 — 从零跑通用户 CRUD + JWT 鉴权 + Thrift RPC 跨模块调用
 
 ## 项目结构
 
 ```
-springboot-demo/
-├── build.gradle                    # Gradle 依赖配置（类比 package.json）
-├── settings.gradle                 # Gradle 项目设置
-├── src/main/
-│   ├── resources/
-│   │   └── application.yml          # 项目配置文件（类比 .env + config）
-│   └── java/com/example/
-│       ├── Application.java          # 启动入口
-│       ├── common/                   # 通用组件
-│       │   ├── aspect/
-│       │   │   └── LogAspect.java      # AOP 日志切面（自动记录 Service 调用）
-│       │   ├── result/
-│       │   │   ├── Result.java       # 统一响应结构
-│       │   │   └── PageResult.java   # 分页响应结构
-│       │   └── exception/
-│       │       ├── BusinessException.java       # 业务异常
-│       │       └── GlobalExceptionHandler.java  # 全局异常处理
-│       ├── config/                   # 配置类
-│       │   ├── SecurityConfig.java   # Spring Security + JWT
-│       │   └── RedisConfig.java      # Redis 序列化
-│       ├── security/                 # 安全相关
-│       │   ├── JwtUtil.java          # JWT 工具类
-│       │   └── JwtAuthFilter.java    # JWT 认证过滤器
-│       └── modules/                  # 业务模块（按模块组织）
-│           ├── user/                  # 用户模块（JPA 实现）
-│           │   ├── entity/User.java   # 实体（对应数据库表）
-│           │   ├── dto/               # 接收前端参数
-│           │   │   ├── RegisterDTO.java
-│           │   │   ├── LoginDTO.java
-│           │   │   └── UserUpdateDTO.java
-│           │   ├── vo/                # 返回给前端的数据
-│           │   │   ├── UserVO.java
-│           │   │   └── LoginVO.java
-│           │   ├── repository/        # 数据访问层
-│           │   │   └── UserRepository.java
-│           │   ├── service/           # 业务逻辑层
-│           │   │   └── UserService.java
-│           │   └── controller/        # 接口层
-│           │       ├── UserController.java
-│           │       └── HealthController.java
-│           └── article/               # 文章模块（MyBatis 实现，和 user 对比）
-│               ├── entity/Article.java
-│               ├── dto/
-│               │   ├── ArticleCreateDTO.java
-│               │   └── ArticleUpdateDTO.java
-│               ├── vo/ArticleVO.java
-│               ├── mapper/ArticleMapper.java  # MyBatis Mapper（注解模式）
-│               ├── service/ArticleService.java
-│               └── controller/ArticleController.java
+springboot-demo/                     # 多模块 Gradle 项目
+├── build.gradle                      # 根配置（公共依赖、插件版本）
+├── settings.gradle                   # 多模块声明: app + thrift-api
+├── thrift/                           # Thrift IDL 定义（共享）
+│   └── user-service.thrift           # UserService RPC 接口定义
+├── app/                              # 模块1：主应用（HTTP API + RPC 客户端）
+│   ├── build.gradle                  # app 模块依赖
+│   └── src/main/
+│       ├── resources/
+│       │   └── application.yml        # 配置（含 Thrift 客户端连接）
+│       └── java/com/example/
+│           ├── Application.java       # 启动入口
+│           ├── common/               # 通用组件
+│           ├── config/               # Spring Security + Redis
+│           ├── security/             # JWT
+│           └── modules/
+│               ├── user/              # 用户模块（JPA）
+│               ├── article/           # 文章模块（MyBatis）
+│               └── thriftclient/      # Thrift RPC 客户端模块
+│                   ├── UserServiceThriftClient.java  # RPC 调用封装
+│                   ├── ThriftClientConfig.java      # 客户端配置
+│                   └── ThriftUserController.java    # REST→RPC 接口
+└── thrift-api/                       # 模块2：Thrift RPC 服务端
+    ├── build.gradle                  # thrift-api 模块依赖
+    └── src/main/
+        ├── resources/
+        │   └── application.yml        # Thrift Server 端口配置
+        └── java/com/example/thrift/
+            ├── ThriftApiApplication.java   # 服务端启动入口
+            ├── server/
+            │   ├── UserServiceImpl.java       # RPC 服务实现
+            │   └── ThriftServerConfig.java    # Thrift Server 启动配置
+            └── api/                        # Thrift 编译器生成的代码
+                ├── ThriftUser.java
+                ├── CreateThriftUserRequest.java
+                ├── ThriftUserResponse.java
+                ├── UserNotFoundException.java
+                └── UserService.java          # Iface + Client + Processor
 ```
 
 ## 核心流程：一个请求怎么走通的？
@@ -288,4 +277,65 @@ CREATE TABLE article (
 第 7 步：动手练习
   → 尝试给 Article 新增一个按标题搜索的功能（MyBatis 动态 SQL）
   → 修改 application.yml 感受配置的变化（如改端口号）
+
+第 8 步：理解 Thrift RPC 跨模块调用
+  → 先启动 thrift-api，再启动 app
+  → 调用 /api/thrift/users/1 体验：HTTP → app(Controller) → Thrift RPC → thrift-api(ServiceImpl)
+  → 查看 thrift/user-service.thrift 理解 IDL 定义
+  → 运行 thrift --gen java 重新生成代码，理解代码生成机制
+```
+
+## Thrift RPC 模块
+
+### 架构概览
+
+```
+前端/客户端
+    ↓ HTTP请求
+app 模块 (8080)                    thrift-api 模块 (8081 + 9090)
+    ThriftUserController               ThriftServerConfig
+        ↓ 调用                            ↓ 监听
+    UserServiceThriftClient  ──RPC──→  UserService.Processor
+        ↓ TSocket:9090                     ↓ 分发
+    UserService.Client                 UserServiceImpl
+                                          ↓ 内存Map模拟数据
+                                    返回 ThriftUserResponse
+```
+
+### Thrift IDL
+
+`thrift/user-service.thrift` 定义了 RPC 接口：
+
+- `getUser(id)` — 按 ID 查询用户
+- `createUser(req)` — 创建用户
+- `listUsers()` — 列出所有用户
+
+### 启动方式
+
+```bash
+# 1. 先启动 thrift-api（RPC 服务端）
+cd thrift-api
+../gradlew bootRun
+# 等待看到 "🚀 Thrift Server 启动，监听端口: 9090"
+
+# 2. 再启动 app（主应用 + RPC 客户端）
+cd app
+../gradlew bootRun
+```
+
+### RPC 调用接口
+
+| 方法 | 路径 | 说明 | 调用链路 |
+|------|------|------|----------|
+| GET | /api/thrift/users/{id} | 通过 RPC 查询用户 | HTTP → ThriftUserController → UserServiceThriftClient → thrift-api |
+| POST | /api/thrift/users?name=xxx&email=xxx&age=xxx | 通过 RPC 创建用户 | HTTP → ThriftUserController → UserServiceThriftClient → thrift-api |
+| GET | /api/thrift/users/list | 通过 RPC 获取用户列表 | HTTP → ThriftUserController → UserServiceThriftClient → thrift-api |
+
+### 重新生成 Thrift 代码
+
+```bash
+# 修改 thrift/user-service.thrift 后重新生成
+thrift --gen java thrift/user-service.thrift
+cp gen-java/com/example/thrift/api/*.java thrift-api/src/main/java/com/example/thrift/api/
+rm -rf gen-java
 ```

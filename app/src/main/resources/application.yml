@@ -53,6 +53,13 @@ pagehelper:
   helper-dialect: postgresql
   reasonable: true          # 页码合理化：page<1 查第一页，page>总页查最后一页
 
+# Thrift RPC 客户端配置
+thrift:
+  client:
+    host: localhost
+    port: 9090
+    timeout-ms: 5000
+
 # 日志级别
 logging:
   level:

@@ -131,6 +131,12 @@ CREATE TABLE article (
 
 ## 六、运行项目
 
+本项目是多模块结构，包含 `app`（主应用）和 `thrift-api`（RPC 服务端）两个可独立启动的模块。
+
+> ⚠️ 在根目录执行 `./gradlew bootRun` **只会启动 app 模块**，不会自动启动 thrift-api。两个模块需要分别启动。
+
+### 6.1 只启动主应用（不需要 RPC 功能）
+
 ```bash
 cd ~/workspace/projects/springboot-demo
 
@@ -144,10 +150,44 @@ gradle wrapper
 ./gradlew bootRun -x test
 ```
 
+启动成功后，主应用运行在 **http://localhost:8080**。
+
+### 6.2 同时启动主应用 + Thrift RPC
+
+需要开**两个终端**，先启 thrift-api，再启 app：
+
+```bash
+# 终端1：启动 thrift-api（RPC 服务端）
+cd ~/workspace/projects/springboot-demo/thrift-api
+../gradlew bootRun
+# 等待看到 "🚀 Thrift Server 启动，监听端口: 9090"
+```
+
+```bash
+# 终端2：启动 app（主应用 + RPC 客户端）
+cd ~/workspace/projects/springboot-demo
+./gradlew bootRun
+# 等待看到 "Started Application"
+```
+
+启动后：
+- 主应用 → **http://localhost:8080**
+- Thrift RPC 服务端 → **端口 9090**
+
+### 6.3 一键启动脚本（可选）
+
+如果你嫌开两个终端麻烦，可以用项目根目录的启动脚本：
+
+```bash
+./start.sh          # 同时启动 thrift-api + app
+./start.sh app      # 只启动主应用
+./start.sh stop     # 停止所有服务
+```
+
 ### 验证启动成功
 
 ```bash
-# 健康检查
+# 健康检查（主应用）
 curl http://localhost:8080/api/health
 
 # 注册用户
@@ -163,11 +203,16 @@ curl -X POST http://localhost:8080/api/auth/login \
 # 用返回的 token 访问需要鉴权的接口
 curl http://localhost:8080/api/users/me \
   -H "Authorization: Bearer <your_token>"
+
+# 验证 RPC 接口（需 thrift-api 也启动）
+curl http://localhost:8080/api/thrift/users/list
 ```
 
 ---
 
 ## 七、完整步骤总结
+
+### 只跑主应用（无需 RPC）
 
 ```
 1. brew install openjdk@17 gradle postgresql@17 redis
@@ -180,6 +225,16 @@ curl http://localhost:8080/api/users/me \
 8. cd 项目目录 && gradle wrapper（首次）
 9. ./gradlew bootRun
 10. curl localhost:8080/api/health 验证 ✅
+```
+
+### 跑主应用 + Thrift RPC
+
+```
+1-8 同上
+9. 终端1：cd thrift-api && ../gradlew bootRun（等 9090 端口就绪）
+10. 终端2：./gradlew bootRun
+11. curl localhost:8080/api/health 验证 ✅
+12. curl localhost:8080/api/thrift/users/list 验证 RPC ✅
 ```
 
 ---
@@ -195,6 +250,8 @@ curl http://localhost:8080/api/users/me \
 | `Connection refused: 6379` | Redis 未启动 | `brew services start redis` |
 | `article 表不存在` | 忘了手动建表 | 参见 4.3 节 |
 | 依赖下载慢 | Gradle 默认源国内慢 | `build.gradle` 已配阿里云镜像 |
+| `bootRun` 报 `continuous` 属性错误 | 旧版配置不兼容新版插件 | 已移除，DevTools 热重启由 application.yml 控制 |
+| RPC 接口返回连接拒绝 | thrift-api 未启动 | 先启 thrift-api 再启 app，参见 6.2 节 |
 
 ### Gradle 阿里云镜像
 

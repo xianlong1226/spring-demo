@@ -51,3 +51,6 @@ logs/
 # ===== Spring Boot =====
 # DevTools restart trigger (auto-generated)
 .spring-devtools.properties
+
+# ===== Start script =====
+.pids/

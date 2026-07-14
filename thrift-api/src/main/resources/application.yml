@@ -1,0 +1,18 @@
+server:
+  port: 8081
+
+spring:
+  application:
+    name: thrift-api
+
+# Thrift RPC 服务端配置
+thrift:
+  server:
+    port: 9090
+    min-threads: 5
+    max-threads: 200
+
+# 日志级别
+logging:
+  level:
+    com.example: debug

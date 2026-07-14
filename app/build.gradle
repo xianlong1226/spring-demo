@@ -1,0 +1,47 @@
+description = '前端转全栈 Spring Boot 练手项目 — 主应用模块'
+
+dependencies {
+    // Web
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+
+    // JPA (ORM) — User 模块使用
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+
+    // MyBatis — Article 模块使用
+    implementation 'org.mybatis.spring.boot:mybatis-spring-boot-starter:3.0.3'
+
+    // PageHelper (MyBatis 分页插件)
+    implementation 'com.github.pagehelper:pagehelper-spring-boot-starter:2.1.0'
+
+    // PostgreSQL
+    runtimeOnly 'org.postgresql:postgresql'
+
+    // Redis
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+
+    // Security + JWT
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+    implementation 'io.jsonwebtoken:jjwt-api:0.12.6'
+    runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.6'
+    runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.6'
+
+    // AOP
+    implementation 'org.springframework.boot:spring-boot-starter-aop'
+
+    // Validation
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+
+    // DevTools: 热加载
+    developmentOnly 'org.springframework.boot:spring-boot-devtools'
+
+    // Thrift — RPC 客户端依赖
+    implementation 'org.apache.thrift:libthrift:0.24.0'
+
+    // javax.annotation.Generated — Thrift 生成的代码依赖
+    implementation 'org.apache.tomcat:tomcat-annotations-api:10.1.25'
+
+    // 引入 thrift-api 模块（共享 Thrift 生成的类）
+    implementation project(':thrift-api')
+}
+
+// DevTools 热重启通过 application.yml 配置即可，无需 continuous 属性
